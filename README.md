@@ -1,4 +1,7 @@
-# AMSR_LWP_validation
-validating GOES and AMSR-U LWP
+# LWC Tracking project
 
-Part of liquid cloud tracking project
+
+- Run trajectories
+- Colocate corresponding GOES and AMSR-E data
+- Carry out GOES corrections
+
