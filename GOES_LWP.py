@@ -12,7 +12,7 @@ from tqdm.notebook import tqdm
 import time
 import xarray as xr
 import numpy.ma as ma
-from advection_funcs import subset_around_point
+import advection_functions.advection_funcs 
 import matplotlib.patches as mpatches
 import math
 import cftime
