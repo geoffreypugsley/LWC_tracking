@@ -131,7 +131,9 @@ def process_day(date):
         def process_data(product):
             try:
                 data = gran.get_product_data(product=product, dqf_filter=dqf_filter).flatten()
-                data_25, _, _, _ = binned_statistic_2d(glon_flat[LWC_mask], glat_flat[LWC_mask], data[LWC_mask], statistic='mean', bins=[lon_bins, lat_bins])
+                nan_mask = ~np.isnan(data) # this is true when the data is not nan
+                combined_mask = nan_mask & LWC_mask # this is true when the data is not nan and the cloud is liquid
+                data_25, _, _, _ = binned_statistic_2d(glon_flat[combined_mask], glat_flat[combined_mask], data[combined_mask], statistic='mean', bins=[lon_bins, lat_bins])
             except Exception as e:
                 gran.download(product = product)
                 print(f"Error processing {product} data: {e}")
@@ -158,7 +160,8 @@ def process_day(date):
 
         
         try:
-             CF_25, _, _, _ = binned_statistic_2d(glon_flat, glat_flat, LWC_mask.astype(int).flatten(), statistic='mean', bins=[lon_bins, lat_bins])
+            nan_mask = ~np.isnan(LWC_mask) # this is true when the data is not nan
+            CF_25, _, _, _ = binned_statistic_2d(glon_flat[nan_mask], glat_flat[nan_mask], LWC_mask.astype(int).flatten()[nan_mask], statistic='mean', bins=[lon_bins, lat_bins])
         except Exception as e:
              print(f"Error processing CF 25 resolution data: {e}")
              CF_25 = np.full(expected_shape, nan_fill_value)
