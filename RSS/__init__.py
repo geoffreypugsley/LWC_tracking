@@ -8,17 +8,18 @@ import csat2.misc.stats
 from .amsre_daily_v7 import AMSREdaily
 from .amsr2_daily import AMSR2daily
 from .windsat_daily_v7 import WindSatDaily
+from .ssmis_daily_v7 import SSMISdaily
 DEBUG = False
 
 #Satellite code for files - not currently used
 sat = {'WINDSAT': 'wind', 'AMSR-2':'f34', 'AMSR-E':'f32'}
 # Default version
-default_version = {'WINDSAT': '7.0.1', 'AMSR-2':'8', 'AMSR-E':'7'}
+default_version = {'WINDSAT': '7.0.1', 'AMSR-2':'8', 'AMSR-E':'7','F18':'8','F17':'7.0.1','F16':'7.0.1'}
 # Readin class
-CLASS = {'WINDSAT': WindSatDaily, 'AMSR-E': AMSREdaily, 'AMSR-2': AMSR2daily}
+CLASS = {'WINDSAT': WindSatDaily, 'AMSR-E': AMSREdaily, 'AMSR-2': AMSR2daily,'F18':SSMISdaily,'F17':SSMISdaily,'F16':SSMISdaily}
 
 def readin(product, year, doy, *args, **kwargs):
-    if product in ['AMSR-E', 'AMSR-2', 'WINDSAT']:
+    if product in ['AMSR-E', 'AMSR-2', 'WINDSAT','F18','F17','F16']:
         return readin_griddedRSS(product, year, doy, *args, **kwargs)
     else:
         raise(ValueError, '{} does not exist'.format(product))
@@ -43,12 +44,36 @@ def readin_griddedRSS(product, year, doy, sds, timescale='daily', ver=None, corr
                               doy=doy,
                               version=ver,
                               timescale=timescale)
-    data = CLASS[product](filename[0], missing=np.nan)
+    #print(filename)
+
+    # if not filename:
+    #     raise FileNotFoundError(f"No files found for product: {product}, year: {year}, doy: {doy}, version: {ver}, timescale: {timescale}")
+    if filename[0].endswith('.gz'):
+        data = CLASS[product](filename[0], missing=np.nan)
+    else:
+        data = Dataset(filename[0])
+        #print(f"Variables in the netCDF file: {list(data.variables.keys())}")
+        #print(f"Variable '{name}' shape: {var.shape}")
     output = {}
     for name in sds:
-        output[name] = data.variables[name][:, ::-1]
+        try:
+            output[name] = data.variables[name][:, ::-1]
+        except IndexError:
+            var = data.variables[name]
+            #print(f"Variable '{name}' shape: {var.shape}")  # Print the shape of the variable
+        
+            if var.ndim == 1:
+                output[name] = var[::-1]  # Reverse the one-dimensional array
+            elif var.ndim == 2:
+                output[name] = var[:, ::-1] 
+
         if product == 'WINDSAT':
             output[name] = output[name][::-1]
+
+        # if product == 'AMSR-2':
+        #     output[name] = output[name][:]
+
+        
 
     if ('cloud' in sds) and correctLWP:
         wvp = data.variables['vapor']
@@ -62,4 +87,6 @@ def readin_griddedRSS(product, year, doy, sds, timescale='daily', ver=None, corr
         clwp_correct = np.clip(clwp_correct, -0.03, 0.03)
         output['cloud'] -= csat2.misc.stats.zero_nans(clwp_correct)
         output['correct'] = clwp_correct
+
+    
     return output
