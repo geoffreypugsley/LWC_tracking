@@ -35,7 +35,7 @@ def dqf_filter(dqf_data):
 # make a netCDF file that is all the GOES CONUS data for 2020 at 0.25 degree resolution of 0.25 degree grid
 
 t_step = 30
-year = 2022
+year = 2021
 start_date = datetime(year,1,1,0,0,0)
 
 end_date = datetime(year, 12, 31, 23, 59)
@@ -241,9 +241,8 @@ def process_day(date):
 current_date = start_date
 
 
-# %%
 
-
+#%%
 
 
 
